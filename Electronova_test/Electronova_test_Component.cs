@@ -19,7 +19,7 @@ namespace Electronova_test
         public Electronova_test_Component()
           : base("Electronova_test_Component", "ASpi",
             "Construct an Archimedean, or arithmetic, spiral given its radii and number of turns.",
-            "Curve", "Primitive")
+            "Electronova test", "Primitive")
         {
         }
 
