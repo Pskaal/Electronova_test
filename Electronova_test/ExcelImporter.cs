@@ -6,13 +6,13 @@ using ExcelDataReader;
 
 public class ExcelImporter
 {
-    public static List<List<string>> ImportExcel()
+    public static List<List<string>> ImportExcel(string filePath)
     {
         List<List<string>> data = new List<List<string>>();
 
         try
         {
-            using (var stream = File.Open("..\\..\\..\\Vedlegg\\Trekkekum.xlsx", FileMode.Open, FileAccess.Read))
+            using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read)) //"..\\..\\..\\Vedlegg\\Trekkekum.xlsx"
             {
                 using (var reader = ExcelReaderFactory.CreateReader(stream))
                 {
@@ -33,7 +33,7 @@ public class ExcelImporter
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error reading Excel file: " + ex.Message);
+            return null;
         }
 
         return data;

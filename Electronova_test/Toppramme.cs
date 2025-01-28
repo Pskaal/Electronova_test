@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Grasshopper;
 using Grasshopper.Kernel;
+using Rhino.FileIO;
 using Rhino.Geometry;
 using Rhino.Render.ChangeQueue;
 
@@ -28,6 +29,7 @@ namespace Electronova_test
             pManager.AddNumberParameter("Wall thickness", "WT", "Thickness of walls", GH_ParamAccess.item, 10);
             pManager.AddNumberParameter("Bunnramme and Hoveddel offset", "BRHR-OFF", "Offset to compensate for Z offset of other parts", GH_ParamAccess.item);
             pManager.AddNumberParameter("Slant height", "SH", "Height of extended wall which causes slant in top", GH_ParamAccess.item);
+            pManager.AddGenericParameter("File path", "FP", "File path of excel file", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Number in excel file", "N", "Select kum with slider", GH_ParamAccess.item);
         }
 
@@ -47,6 +49,7 @@ namespace Electronova_test
             double wallThickness = 0;
             double offsetHeight = 0;
             double slantHeight = 0;
+            string filePath = "";
             
 
             if (!DA.GetData(0, ref width)) return;
@@ -56,11 +59,15 @@ namespace Electronova_test
             if (!DA.GetData(4, ref offsetHeight)) return;
             if (!DA.GetData(5, ref slantHeight)) return;
 
-            int excelNumber = 0;
-            if (!DA.GetData(6, ref excelNumber)) return;
+            //Excel file path
+            if (!DA.GetData(6, ref filePath)) return;
 
-            var excelData = ExcelImporter.ImportExcel();
-            if ( excelData != null & excelNumber != 0)
+            //Excel import
+            int excelNumber = 0;
+            if (!DA.GetData(7, ref excelNumber)) return;
+
+            var excelData = ExcelImporter.ImportExcel(filePath);
+            if (excelData != null & excelNumber != 0 & filePath != "")
             {
                 double.TryParse(excelData[excelNumber][2], out length);
                 double.TryParse(excelData[excelNumber][3], out width);

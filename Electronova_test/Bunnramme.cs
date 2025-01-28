@@ -24,6 +24,7 @@ namespace Electronova_test
             pManager.AddNumberParameter("Height", "H", "Height of the base", GH_ParamAccess.item, 1000);
             pManager.AddNumberParameter("Length", "L", "Length of the base", GH_ParamAccess.item, 1000);
             pManager.AddNumberParameter("Wall thickness", "WT", "Thickness of walls", GH_ParamAccess.item, 10);
+            pManager.AddGenericParameter("File path", "FP", "File path of excel file", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Number in excel file", "N", "Select kum with slider", GH_ParamAccess.item);
         }
 
@@ -41,18 +42,22 @@ namespace Electronova_test
             double height = 0;
             double length = 0;
             double wallThickness = 0;
+            string filePath = "";
 
             if (!DA.GetData(0, ref width)) return;
             if (!DA.GetData(1, ref height)) return;
             if (!DA.GetData(2, ref length)) return;
             if (!DA.GetData(3, ref wallThickness)) return;
 
+            //Excel file path
+            if (!DA.GetData(4, ref filePath)) return;
+
             //Excel import
             int excelNumber = 0;
-            if (!DA.GetData(4, ref excelNumber)) return;
+            if (!DA.GetData(5, ref excelNumber)) return;
 
-            var excelData = ExcelImporter.ImportExcel();
-            if (excelData != null & excelNumber != 0)
+            var excelData = ExcelImporter.ImportExcel(filePath);
+            if (excelData != null & excelNumber != 0 & filePath != "")
             {
                 double.TryParse(excelData[excelNumber][2], out length);
                 double.TryParse(excelData[excelNumber][3], out width);
