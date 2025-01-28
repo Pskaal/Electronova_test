@@ -28,6 +28,7 @@ namespace Electronova_test
             pManager.AddNumberParameter("Wall thickness", "WT", "Thickness of walls", GH_ParamAccess.item, 10);
             pManager.AddNumberParameter("Bunnramme and Hoveddel offset", "BRHR-OFF", "Offset to compensate for Z offset of other parts", GH_ParamAccess.item);
             pManager.AddNumberParameter("Slant height", "SH", "Height of extended wall which causes slant in top", GH_ParamAccess.item);
+            pManager.AddIntegerParameter("Number in excel file", "N", "Select kum with slider", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -46,6 +47,7 @@ namespace Electronova_test
             double wallThickness = 0;
             double offsetHeight = 0;
             double slantHeight = 0;
+            
 
             if (!DA.GetData(0, ref width)) return;
             if (!DA.GetData(1, ref height)) return;
@@ -53,6 +55,20 @@ namespace Electronova_test
             if (!DA.GetData(3, ref wallThickness)) return;
             if (!DA.GetData(4, ref offsetHeight)) return;
             if (!DA.GetData(5, ref slantHeight)) return;
+
+            int excelNumber = 0;
+            if (!DA.GetData(6, ref excelNumber)) return;
+
+            var excelData = ExcelImporter.ImportExcel();
+            if ( excelData != null & excelNumber != 0)
+            {
+                double.TryParse(excelData[excelNumber][2], out length);
+                double.TryParse(excelData[excelNumber][3], out width);
+            }
+
+            //Quick fix since excel measurements seem to be inner, aka without the wallthickness
+            length = length + 2*wallThickness;
+            width = width + 2*wallThickness;
 
             // Create box. Basically doing outerBox minus innerBox to create empty shell "walls"
             var outerBox = new Box(new Plane(Point3d.Origin, Vector3d.ZAxis), 
@@ -70,24 +86,35 @@ namespace Electronova_test
                 new Interval(0, wallThickness),
                 new Interval(offsetHeight + height, offsetHeight + height + slantHeight));
 
-            
-            var walls = Brep.CreateBooleanDifference(Brep.CreateFromBox(outerBox), Brep.CreateFromBox(innerBox), Rhino.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance);
+            var walls = new Box().ToBrep();
             var extendedWallBrep = Brep.CreateFromBox(extendedWall);
+            if (height != 0.00)
+            {
+                walls = Brep.CreateBooleanDifference(Brep.CreateFromBox(outerBox), Brep.CreateFromBox(innerBox), Rhino.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance)[0];
+                extendedWallBrep = Brep.CreateFromBox(extendedWall);
+            }
 
-            var sideTriangles = new Triangle3d(
-                new Point3d(0, 0, offsetHeight + height),
+            var sideTriangle1 = new Triangle3d(
+                new Point3d(0, wallThickness, offsetHeight + height),
                 new Point3d(0, width, offsetHeight + height),
-                new Point3d(0, 0, offsetHeight + height + slantHeight)
+                new Point3d(0, wallThickness, offsetHeight + height + slantHeight)
                 );
 
-            var triangleMesh = sideTriangles.ToMesh();
-            var triangleBrep = Brep.CreateFromMesh(triangleMesh, false);
-        
+            var sideTriangle2 = new Triangle3d(
+                new Point3d(length - wallThickness, wallThickness, offsetHeight + height),
+                new Point3d(length - wallThickness, width, offsetHeight + height),
+                new Point3d(length - wallThickness, wallThickness, offsetHeight + height + slantHeight)
+                );
+
+            var triangleBrep1 = Brep.CreateFromMesh(sideTriangle1.ToMesh(), false);
+            var triangleBrep2 = Brep.CreateFromMesh(sideTriangle2.ToMesh(), false);
+
             var breps = new List<Brep>
             {
-                walls[0],
+                walls,
                 extendedWallBrep,
-                triangleBrep
+                triangleBrep1,
+                triangleBrep2
             };
                 
 

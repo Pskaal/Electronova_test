@@ -23,6 +23,7 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageReference Include="ExcelDataReader" Version="3.7.0" />
     <PackageReference Include="Grasshopper" Version="8.0.23304.9001" ExcludeAssets="runtime" />
   </ItemGroup>
   

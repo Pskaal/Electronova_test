@@ -24,6 +24,7 @@ namespace Electronova_test
             pManager.AddNumberParameter("Height", "H", "Height of the base", GH_ParamAccess.item, 1000);
             pManager.AddNumberParameter("Length", "L", "Length of the base", GH_ParamAccess.item, 1000);
             pManager.AddNumberParameter("Wall thickness", "WT", "Thickness of walls", GH_ParamAccess.item, 10);
+            pManager.AddIntegerParameter("Number in excel file", "N", "Select kum with slider", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -46,6 +47,21 @@ namespace Electronova_test
             if (!DA.GetData(2, ref length)) return;
             if (!DA.GetData(3, ref wallThickness)) return;
 
+            //Excel import
+            int excelNumber = 0;
+            if (!DA.GetData(4, ref excelNumber)) return;
+
+            var excelData = ExcelImporter.ImportExcel();
+            if (excelData != null & excelNumber != 0)
+            {
+                double.TryParse(excelData[excelNumber][2], out length);
+                double.TryParse(excelData[excelNumber][3], out width);
+            }
+
+            //Quick fix since excel measurements seem to be inner, aka without the wallthickness
+            length = length + 2 * wallThickness;
+            width = width + 2 * wallThickness;
+
             // Create box. Basically doing outerBox minus innerBox to create empty shell "walls"
             var outerBox = new Box(new Plane(Point3d.Origin, Vector3d.ZAxis), 
                 new Interval(0, length),
@@ -57,10 +73,13 @@ namespace Electronova_test
                 new Interval(wallThickness, width - wallThickness),
                 new Interval(0, height));
 
-            var walls = Brep.CreateBooleanDifference(Brep.CreateFromBox(outerBox), Brep.CreateFromBox(innerBox), Rhino.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance);
+            var walls = new Box().ToBrep();
+            if (height != 0.00)
+            {
+                walls = Brep.CreateBooleanDifference(Brep.CreateFromBox(outerBox), Brep.CreateFromBox(innerBox), Rhino.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance)[0];
+            }
 
-            DA.SetData(0, walls[0]);
-
+            DA.SetData(0, walls);
         }
 
         protected override System.Drawing.Bitmap Icon

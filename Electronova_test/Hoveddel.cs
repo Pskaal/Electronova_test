@@ -25,6 +25,7 @@ namespace Electronova_test
             pManager.AddNumberParameter("Length", "L", "Length of the base", GH_ParamAccess.item, 1000);
             pManager.AddNumberParameter("Wall thickness", "WT", "Thickness of walls", GH_ParamAccess.item, 10);
             pManager.AddNumberParameter("Bunnramme offset", "BR OFF", "Z offset cause by Bunnramme", GH_ParamAccess.item);
+            pManager.AddIntegerParameter("Number in excel file", "N", "Select kum with slider", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -49,7 +50,22 @@ namespace Electronova_test
             if (!DA.GetData(3, ref wallThickness)) return;
             if (!DA.GetData(4, ref bunnrammeHeight)) return;
 
-            // Create box. Basically doing outerBox minus innerBox to create empty shell "walls"
+            //Excel import
+            int excelNumber = 0;
+            if (!DA.GetData(5, ref excelNumber)) return;
+
+            var excelData = ExcelImporter.ImportExcel();
+            if (excelData != null & excelNumber != 0)
+            {
+                double.TryParse(excelData[excelNumber][2], out length);
+                double.TryParse(excelData[excelNumber][3], out width);
+            }
+
+            //Quick fix since excel measurements seem to be inner, aka without the wallthickness
+            length = length + 2 * wallThickness;
+            width = width + 2 * wallThickness;
+
+            // Create box. OuterBox minus innerBox to create empty shell "walls"
             var outerBox = new Box(new Plane(Point3d.Origin, Vector3d.ZAxis), 
                 new Interval(0, length), 
                 new Interval(0, width), 
